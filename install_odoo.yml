@@ -1,0 +1,65 @@
+---
+- name: Install Odoo 14.0
+  hosts: all
+  become: true
+  tasks:
+    - name: update repository index
+      apt:
+        update_cache: yes
+      when: ansible_distribution in ["Debian","Ubuntu"]
+
+    - name: install postgresql and postgresql-contrib  package
+      apt:
+        name:
+          - postgresql
+          - postgresql-contrib
+      when: ansible_distribution in ["Debian","Ubuntu"]
+
+    - name: install Python dev dependencies, git, Node, and other requirements
+      apt:
+        name:
+          - wget
+          - curl
+          - build-essential
+          - libssl-dev
+          - zlib1g-dev
+          - libbz2-dev
+          - libreadline-dev
+          - libsqlite3-dev
+          - llvm
+          - libncurses5-dev
+          - libncursesw5-dev
+          - xz-utils
+          - tk-dev
+          - libffi-dev
+          - liblzma-dev
+          - python3-openssl
+          - git
+          - libpq-dev
+          - libsasl2-dev
+          - libldap2-dev
+          - ccze
+          - node-less
+        update_cache: true
+      when: ansible_distribution in ["Debian","Ubuntu"]
+
+    - name: Download wkhtmltox package
+      get_url:
+        url: "https://github.com/wkhtmltopdf/packaging/releases/download/0.12.6-1/wkhtmltox_0.12.6-1.bionic_amd64.deb"
+        dest: "/tmp/wkhtmltox_0.12.6-1.bionic_amd64.deb"
+      when: ansible_distribution in ["Debian","Ubuntu"]
+
+    - name: Install wkhtmltox package
+      apt:
+        deb: "/tmp/wkhtmltox_0.12.6-1.bionic_amd64.deb"
+        state: present
+      when: ansible_distribution in ["Debian","Ubuntu"]
+
+    - name: Create Odoo user
+      user:
+        name: odoo
+        state: present
+        createhome: yes
+        system: yes
+        shell: /bin/bash
+      when: ansible_distribution in ["Debian","Ubuntu"]
