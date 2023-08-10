@@ -1,0 +1,22 @@
+---
+- name: Update System Packages
+  hosts: all
+  become: true
+
+  tasks:
+    - name: Update package cache
+      apt:
+        update_cache: yes
+      when: ansible_os_family == 'Debian'
+
+    - name: Update packages
+      package:
+        name: '*'
+        state: latest
+      when: ansible_os_family == 'Debian'
+
+    - name: Update package cache
+      yum:
+        name: '*'
+        state: latest
+      when: ansible_os_family == 'RedHat'
