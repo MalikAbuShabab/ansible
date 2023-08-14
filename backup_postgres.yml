@@ -6,9 +6,9 @@
   tasks:
     - name: Create backup directory
       file:
-        path: ~/backup/
+        path: /var/lib/postgresql/backup
         state: directory
 
     - name: Backup PostgreSQL databases
       become_user: postgres
-      shell: pg_dumpall > ~/backup/all_databases_backup.sql
+      shell: pg_dumpall > /var/lib/postgresql/backup/all_databases_backup.sql
