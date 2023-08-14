@@ -1,0 +1,14 @@
+---
+- name: Backup PostgreSQL Databases
+  hosts: all
+  become: yes
+
+  tasks:
+    - name: Create backup directory
+      file:
+        path: ~/backup/
+        state: directory
+
+    - name: Backup PostgreSQL databases
+      become_user: postgres
+      shell: pg_dumpall > ~/backup/all_databases_backup.sql
