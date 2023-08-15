@@ -5,7 +5,7 @@
 
   tasks:
     - name: Check if PostgreSQL is installed
-      shell: dpkg -l | grep postgresql
+      shell: which pg_dumpall
       register: postgres_installed
       changed_when: false  # Prevent marking this task as 'changed'
 
