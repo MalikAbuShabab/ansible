@@ -23,3 +23,16 @@
       failed_when: backup_result.rc != 0
       when: postgres_installed.rc == 0
   # Only run if PostgreSQL is installed
+
+    - name: Delete old backup files
+      find:
+        paths: /var/lib/postgresql/backup/
+        patterns: 'all_databases_backup_*.sql'
+        age: '7d'  # Adjust this value based on how old files should be retained
+      register: old_backup_files
+
+    - name: Remove old backup files
+      file:
+        path: "{{ item.path }}"
+        state: absent
+      with_items: "{{ old_backup_files.files }}"
