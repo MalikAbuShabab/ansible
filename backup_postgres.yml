@@ -5,9 +5,9 @@
 
   tasks:
     - name: Check if PostgreSQL is installed
-      shell: dpkg -l | grep postgresql
+      shell: which pg_dumpall
       register: postgres_installed
-      changed_when: false
+      changed_when: false  # Prevent marking this task as 'changed'
 
     - name: Create backup directory
       file:
@@ -18,8 +18,8 @@
 
     - name: Backup PostgreSQL databases
       become_user: postgres
-      shell: /path/to/pg_dumpall > /var/lib/postgresql/backup/all_databases_backup_{{ ansible_date_time.date }}_{{ ansible_date_time.hour }}{{ ansible_date_time.minute }}.sql
+      shell: pg_dumpall > /var/lib/postgresql/backup/all_databases_backup_{{ ansible_date_time.date }}_{{ ansible_date_time.hour }}{{ ansible_date_time.minute }}.sql
       register: backup_result
       failed_when: backup_result.rc != 0
-      when: postgres_installed.rc == 0  # Only run if PostgreSQL is installed
-
+      when: postgres_installed.rc == 0
+  # Only run if PostgreSQL is installed
