@@ -4,23 +4,27 @@
   become: yes
 
   tasks:
-    - name: Check if user 'postgres' exists
-      command: id -u postgres
-      register: postgres_user_exists
-      ignore_errors: true  # Ignore if user doesn't exist
+    - name: Check if PostgreSQL is installed and get its version
+      become: yes
+      shell: psql --version | awk '{print $3}'
+      register: postgres_version
+      ignore_errors: true
+
 
     - name: Create backup directory
       file:
         path: /var/lib/postgresql/backup
         state: directory
         mode: '0777'
-      when: postgres_user_exists.rc == 0  # Only run if PostgreSQL is installed
+      when: postgres_version.rc == 0  # Only run if PostgreSQL is installed
 
     - name: Backup PostgreSQL databases
       become_user: postgres
       shell: pg_dumpall > /var/lib/postgresql/backup/all_databases_backup_{{ ansible_date_time.date }}_{{ ansible_date_time.hour }}{{ ansible_date_time.minute }}.sql
-      register: backup_result     
-      when: postgres_user_exists.rc == 0
+      register: backup_result  
+      failed_when: backup_result.rc != 0  # Add this line to handle failed backup command
+      when: postgres_version.rc == 0
+      
   # Only run if PostgreSQL is installed
 
     - name: Delete old backup files
@@ -29,7 +33,7 @@
         patterns: 'all_databases_backup_*.sql'
         age: '7d'  # Adjust this value based on how old files should be retained
       register: old_backup_files
-      when: postgres_user_exists.rc == 0  # Only run if PostgreSQL is installed
+      when: postgres_version.rc == 0  # Only run if PostgreSQL is installed
 
 
     - name: Remove old backup files
@@ -37,5 +41,5 @@
         path: "{{ item.path }}"
         state: absent
       with_items: "{{ old_backup_files.files }}"
-      when: postgres_user_exists.rc == 0  # Only run if PostgreSQL is installed
+      when: postgres_version.rc == 0  # Only run if PostgreSQL is installed
 
