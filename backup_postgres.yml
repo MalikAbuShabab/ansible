@@ -11,4 +11,6 @@
 
     - name: Backup PostgreSQL databases
       become_user: postgres
-      shell: pg_dumpall > /var/lib/postgresql/backup/all_databases_backup.sql
+      command: pg_dumpall > /var/lib/postgresql/backup/all_databases_backup_{{ ansible_date_time.date }}_{{ ansible_date_time.hour }}{{ ansible_date_time.minute }}.sql
+      register: backup_result
+      failed_when: backup_result.rc != 0
