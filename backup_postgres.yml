@@ -1,7 +1,12 @@
 ---
-- name: Backup PostgreSQL Databases
+- name: Backup PostgreSQL Databases and Sync
   hosts: all
   become: yes
+
+  vars:
+    backup_directory: /var/lib/postgresql/backup
+    backup_server: backup.example.com  # Replace with your backup server's hostname or IP
+    backup_server_username: backupuser  # Replace with the username on the backup server
 
   tasks:
     - name: Check if PostgreSQL is installed and get its version
@@ -12,21 +17,21 @@
 
     - name: Create backup directory
       file:
-        path: /var/lib/postgresql/backup
+        path: "{{ backup_directory }}"
         state: directory
         mode: '0777'
       when: postgres_version.rc == 0
 
     - name: Backup PostgreSQL databases
       become_user: postgres
-      shell: pg_dumpall > /var/lib/postgresql/backup/all_databases_backup_{{ ansible_date_time.date }}_{{ ansible_date_time.hour }}{{ ansible_date_time.minute }}_{{ ansible_hostname }}.sql
+      shell: pg_dumpall > "{{ backup_directory }}/all_databases_backup_{{ ansible_date_time.date }}_{{ ansible_date_time.hour }}{{ ansible_date_time.minute }}_{{ ansible_hostname }}.sql"
       register: backup_result
       failed_when: backup_result.rc != 0
       when: postgres_version.rc == 0
 
     - name: Delete old backup files
       find:
-        paths: /var/lib/postgresql/backup/
+        paths: "{{ backup_directory }}/"
         patterns: 'all_databases_backup_*.sql'
         age: '7d'
       register: old_backup_files
@@ -37,4 +42,9 @@
         path: "{{ item.path }}"
         state: absent
       with_items: "{{ old_backup_files.files }}"
+      when: postgres_version.rc == 0
+
+    - name: Sync backup files to backup server
+      delegate_to: localhost
+      command: rsync -av "{{ backup_directory }}/" "{{ backup_server_username }}@{{ backup_server }}:~/backup/"
       when: postgres_version.rc == 0
