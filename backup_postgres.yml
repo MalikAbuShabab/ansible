@@ -44,7 +44,4 @@
       with_items: "{{ old_backup_files.files }}"
       when: postgres_version.rc == 0
 
-    - name: Sync backup files to backup server
-      delegate_to: localhost
-      command: rsync -av "{{ backup_directory }}/" "{{ backup_server_username }}@{{ backup_server }}:~/backup/"
-      when: postgres_version.rc == 0
+
