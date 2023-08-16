@@ -10,36 +10,31 @@
       register: postgres_version
       ignore_errors: true
 
-
     - name: Create backup directory
       file:
         path: /var/lib/postgresql/backup
         state: directory
         mode: '0777'
-      when: postgres_version.rc == 0  # Only run if PostgreSQL is installed
+      when: postgres_version.rc == 0
 
     - name: Backup PostgreSQL databases
       become_user: postgres
-      shell: pg_dumpall > /var/lib/postgresql/backup/all_databases_backup_{{ ansible_date_time.date }}_{{ ansible_date_time.hour }}{{ ansible_date_time.minute }}.sql
-      register: backup_result  
-      failed_when: backup_result.rc != 0  # Add this line to handle failed backup command
+      shell: pg_dumpall > /var/lib/postgresql/backup/all_databases_backup_{{ ansible_date_time.date }}_{{ ansible_date_time.hour }}{{ ansible_date_time.minute }}_{{ ansible_hostname }}.sql
+      register: backup_result
+      failed_when: backup_result.rc != 0
       when: postgres_version.rc == 0
-      
-  # Only run if PostgreSQL is installed
 
     - name: Delete old backup files
       find:
         paths: /var/lib/postgresql/backup/
         patterns: 'all_databases_backup_*.sql'
-        age: '7d'  # Adjust this value based on how old files should be retained
+        age: '7d'
       register: old_backup_files
-      when: postgres_version.rc == 0  # Only run if PostgreSQL is installed
-
+      when: postgres_version.rc == 0
 
     - name: Remove old backup files
       file:
         path: "{{ item.path }}"
         state: absent
       with_items: "{{ old_backup_files.files }}"
-      when: postgres_version.rc == 0  # Only run if PostgreSQL is installed
-
+      when: postgres_version.rc == 0
